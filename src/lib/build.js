@@ -116,6 +116,48 @@ export function person(p, x, z, shirt = '#e67e22', s = 1) {
   return g;
 }
 
+export function seatedStudent(p, x, z, shirt = '#e67e22', s = 0.85, ry = 180) {
+  const g = group(p, v(x, 0, z), { scale: v(s, s, s), rotation: v(0, ry, 0) });
+  const skin = '#d9a066', pants = '#34495e';
+
+  // Hips sitting on the chair seat (seat height ~0.44)
+  box(g, '0 0.44 0', 0.26, 0.1, 0.22, pants);
+
+  // Thighs (horizontal, extending forward +Z towards the desk)
+  [-0.07, 0.07].forEach((lx) => {
+    cyl(g, v(lx, 0.44, 0.13), 0.05, 0.24, pants, 12, { rotation: '90 0 0' });
+    // Knees
+    ball(g, v(lx, 0.44, 0.24), 0.055, pants);
+    // Lower legs / calves (vertical, down to the floor)
+    cyl(g, v(lx, 0.24, 0.24), 0.048, 0.36, pants, 12);
+    // Shoes on the floor
+    box(g, v(lx, 0.025, 0.27), 0.08, 0.05, 0.15, '#212121');
+  });
+
+  // Torso (upright on chair, slight 5-deg forward lean toward desk)
+  const upper = group(g, '0 0.48 0', { rotation: '5 0 0' });
+  cyl(upper, '0 0.16 0', 0.12, 0.34, shirt, 16).classList.add('torso', 'no-merge');
+  ball(upper, '0 0.33 0', 0.125, shirt, { scale: '1.05 0.45 0.85' });
+
+  // Arms: reaching forward onto the desk
+  [-0.15, 0.15].forEach((ax) => {
+    // Upper arm: angled down and forward
+    cyl(upper, v(ax, 0.20, 0.08), 0.038, 0.22, shirt, 10, { rotation: '-50 0 ' + (ax > 0 ? '14' : '-14') });
+    // Forearm: resting forward on desk
+    cyl(upper, v(ax * 0.88, 0.10, 0.22), 0.035, 0.22, shirt, 10, { rotation: '-82 0 ' + (ax > 0 ? '6' : '-6') });
+    // Hands
+    ball(upper, v(ax * 0.78, 0.09, 0.32), 0.035, skin);
+  });
+
+  // Neck, head and hair looking slightly down at the book
+  cyl(upper, '0 0.40 0.02', 0.038, 0.06, skin, 10);
+  const head = group(upper, '0 0.49 0.04', { rotation: '12 0 0' });
+  ball(head, '0 0 0', 0.105, skin);
+  ball(head, '0 0.035 -0.015', 0.11, '#3e2723', { 'theta-length': 95 });
+
+  return g;
+}
+
 export function cloud(p, x, y, z, s = 1) {
   const g = group(p, v(x, y, z), { scale: v(s, s, s), 'merge-static': '' });
   [[0, 0, 0, 0.6], [0.6, -0.1, 0, 0.45], [-0.6, -0.1, 0, 0.45], [0.25, 0.25, 0.1, 0.4]].forEach(([cx, cy, cz, r]) => blob(g, v(cx, cy, cz), r, '#ffffff'));

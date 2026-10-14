@@ -6,7 +6,7 @@
 // houses, turbines, fish, etc. When a Sketchfab model is missing, a code-built stand-in is used.
 import {
   v, M, el, group, box, cyl, cone, ball, text, anim, growIn,
-  tree, house, person, turbine, solarPanel, fish,
+  tree, house, person, seatedStudent, turbine, solarPanel, fish,
   waterDrop, waterFilterStation
 } from '../lib/build.js';
 import { model, texturedGround, texturedMaterial, placeOnTop, externalOr } from '../lib/assets.js';
@@ -189,7 +189,8 @@ export const BUILDERS = {
         const glow = ball(root, v(x, 1.78, z + 0.4), 0.09, '#f9e79f', { material: M('#f9e79f', 'emissive: #f7dc6f; emissiveIntensity: 1.2; opacity: 0.6; transparent: true') });
         growIn(bulb, '3 3 3');
         growIn(glow);
-        P.person(root, x, z + 0.6, ['#e67e22', '#8e44ad', '#2e86de', '#16a085', '#c0392b'][i], 0.75);
+        const student = seatedStudent(root, x, z + 0.52, ['#e67e22', '#8e44ad', '#2e86de', '#16a085', '#c0392b'][i], 0.85, 180);
+        growIn(student, '0.85 0.85 0.85');
         step();
       });
     });
