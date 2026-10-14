@@ -6,7 +6,8 @@
 // houses, turbines, fish, etc. When a Sketchfab model is missing, a code-built stand-in is used.
 import {
   v, M, el, group, box, cyl, cone, ball, text, anim, growIn,
-  tree, house, person, turbine, solarPanel, fish
+  tree, house, person, turbine, solarPanel, fish,
+  waterDrop, waterFilterStation
 } from '../lib/build.js';
 import { model, texturedGround, texturedMaterial, placeOnTop, externalOr } from '../lib/assets.js';
 import { target } from '../lib/gaze.js';
@@ -231,29 +232,62 @@ export const BUILDERS = {
     ctx.env('clear');
     texturedGround(root, 'leafy_grass');
     backdrop(root, { shrubs: 3, rocks: 3 });
+
+    // Pond rim and embankment: soil bed + water surface
     cyl(root, '0 0.02 -4.6', 2.5, 0.04, '#6b5a43', 24, { material: texturedMaterial('farm_soil', 2) });
-    const pond = cyl(root, '0 0.06 -4.6', 2.3, 0.04, '#7a5c2e', 24, { material: WATER('#7a5c2e') });
-    model(root, 'wooden_bucket_01', '2.9 0 -3.4');
+    const pond = cyl(root, '0 0.06 -4.6', 2.3, 0.04, '#7a5c2e', 32, { material: WATER('#7a5c2e') });
+
+    // Decorative river stones bordering the pond rim
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const rx = Math.sin(a) * 2.38;
+      const rz = -4.6 + Math.cos(a) * 2.38;
+      const stoneColor = i % 3 === 0 ? '#64748b' : i % 3 === 1 ? '#475569' : '#78716c';
+      ball(root, v(rx, 0.06, rz), 0.12 + (i % 4) * 0.02, stoneColor, {
+        scale: `1.2 0.5 ${0.9 + (i % 2) * 0.3}`,
+        material: `color: ${stoneColor}; roughness: 0.9`
+      });
+    }
+    model(root, 'rock_07', '-2.6 0 -4.6', { scale: 0.9, rot: '0 30 0' });
+    model(root, 'rock_07', '2.2 0 -5.8', { scale: 0.75, rot: '0 110 0' });
+
+    // Multi-stage Water Filtration & Purification Station model
+    waterFilterStation(root, 3.2, -5.2, 1.15);
+
+    // Clean water containers around the station
+    model(root, 'plastic_bottle_gallon', '3.65 0 -4.5', { scale: 1.1, rot: '0 -25 0' });
+    model(root, 'wooden_bucket_01', '2.8 0 -3.6');
     model(root, 'plastic_jerrycan', '-2.9 0 -3.6', { rot: '0 40 0' });
-    const tank = group(root, '3.2 0 -5.2', { 'merge-static': '' });
-    cyl(tank, '0 0.8 0', 0.45, 1.6, '#d5dbdb', 16, { material: 'color: #d5dbdb; metalness: 0.7; roughness: 0.25' });
-    cyl(tank, '-0.6 1.3 0', 0.05, 1.2, '#95a5a6', 8, { rotation: '0 0 90', material: 'color: #95a5a6; metalness: 0.8; roughness: 0.3' });
+    model(root, 'plastic_crate_02', '4.3 0 -4.7', { scale: 0.95, rot: '0 20 0' });
+
     const colors = ['#6f6a3a', '#5d8a6a', '#4aa7b8', '#26BDE2'];
     const step = ctx.task(4);
     let done = 0;
+
+    // 4 floating organic teardrop water droplets
     [[-1.6, 1.5, -3.2], [-0.5, 1.9, -3.0], [0.6, 1.9, -3.0], [1.6, 1.5, -3.2]].forEach(([x, y, z]) => {
-      const drop = group(root, v(x, y, z));
-      const dc = cone(drop, '0 0.12 0', 0.15, 0, 0.3, '#7a5c2e', 16, { material: WATER('#7a5c2e') });
-      const db = el(drop, 'a-sphere', { radius: 0.15, 'segments-width': 16, 'segments-height': 12, material: WATER('#7a5c2e') });
+      const drop = waterDrop(root, v(x, y, z), '#7a5c2e', 1.1);
       anim(drop, 'bob', { property: 'position', to: v(x, y + 0.12, z), dir: 'alternate', loop: true, dur: 1100, easing: 'easeInOutSine' });
+      anim(drop, 'pulse', { property: 'scale', to: '1.04 1.16 1.04', dir: 'alternate', loop: true, dur: 1400, easing: 'easeInOutSine' });
+
       target(drop, () => {
-        dc.setAttribute('material', WATER('#26BDE2'));
-        db.setAttribute('material', WATER('#26BDE2'));
+        drop.setColor('#26BDE2');
+        anim(drop, 'pop', { property: 'scale', to: '1.3 0.9 1.3', dur: 220, easing: 'easeOutBack' });
+        setTimeout(() => {
+          anim(drop, 'restore', { property: 'scale', to: '1.1 1.1 1.1', dur: 300, easing: 'easeOutSine' });
+        }, 220);
         pond.setAttribute('material', WATER(colors[done]));
         done++;
         if (done === 4) {
-          const fountain = cyl(root, '0 0.3 -4.6', 0.06, 0.6, '#d6f4fb', 10, { material: WATER('#d6f4fb') });
-          anim(fountain, 'spray', { property: 'scale', to: '1 3 1', dir: 'alternate', loop: true, dur: 700 });
+          // Multi-jet bubbling fountain with rising splash droplets
+          const center = '0 0.3 -4.6';
+          const fountain = cyl(root, center, 0.08, 0.9, '#d6f4fb', 16, { material: WATER('#d6f4fb') });
+          anim(fountain, 'spray', { property: 'scale', to: '1.2 3.2 1.2', dir: 'alternate', loop: true, dur: 650 });
+          for (let s = 0; s < 6; s++) {
+            const sa = (s / 6) * Math.PI * 2;
+            const jet = ball(root, v(Math.sin(sa) * 0.25, 0.15, -4.6 + Math.cos(sa) * 0.25), 0.06, '#e0f7fa', { material: WATER('#e0f7fa') });
+            anim(jet, 'bob', { property: 'position', to: v(Math.sin(sa) * 0.35, 0.55, -4.6 + Math.cos(sa) * 0.35), dir: 'alternate', loop: true, dur: 500 + s * 80 });
+          }
         }
         step();
       });

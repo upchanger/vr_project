@@ -169,3 +169,137 @@ export function fish(p, color = '#ff8c42', s = 1) {
   });
   return g;
 }
+
+export function createTeardropGeometry(radius = 0.16, height = 0.36, seg = 24) {
+  const pts = [];
+  const steps = 32;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const y = -radius + t * (radius + height);
+    let r;
+    if (y <= 0) {
+      r = Math.sqrt(Math.max(0, radius * radius - y * y));
+    } else {
+      const u = 1 - y / height;
+      r = radius * Math.pow(Math.max(0, u), 1.55);
+    }
+    pts.push(new THREE.Vector2(Math.max(0, r), y));
+  }
+  const geo = new THREE.LatheGeometry(pts, seg);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+export function waterDrop(p, pos, color = '#7a5c2e', s = 1) {
+  const g = group(p, pos, { scale: v(s, s, s) });
+  const geom = createTeardropGeometry(0.18, 0.40, 24);
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(color),
+    roughness: 0.06,
+    metalness: 0.15,
+    transparent: true,
+    opacity: 0.88,
+    side: THREE.DoubleSide
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.castShadow = true;
+  g.setObject3D('mesh', mesh);
+
+  // Soft luminous inner core for liquid depth and refraction
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(color),
+    transparent: true,
+    opacity: 0.35
+  });
+  const core = new THREE.Mesh(createTeardropGeometry(0.12, 0.28, 16), coreMat);
+  core.position.y = -0.01;
+  g.setObject3D('core', core);
+
+  // Glossy highlight reflection on shoulder
+  el(g, 'a-sphere', {
+    position: '0.06 0.08 0.08',
+    radius: 0.035,
+    material: 'color: #ffffff; shader: flat; opacity: 0.75; transparent: true'
+  });
+
+  g.setColor = (newColor) => {
+    mat.color.set(newColor);
+    mat.needsUpdate = true;
+    coreMat.color.set(newColor);
+    coreMat.needsUpdate = true;
+  };
+
+  return g;
+}
+
+export function waterFilterStation(p, x, z, s = 1) {
+  const g = group(p, v(x, 0, z), { scale: v(s, s, s), 'merge-static': '' });
+  const steel = 'color: #718096; metalness: 0.85; roughness: 0.25';
+  const darkMetal = 'color: #2d3748; metalness: 0.9; roughness: 0.3';
+  const tankMetal = 'color: #e2e8f0; metalness: 0.8; roughness: 0.2';
+  const pipeMetal = 'color: #94a3b8; metalness: 0.85; roughness: 0.2';
+
+  // Concrete foundation pad
+  box(g, '0 0.05 0', 1.8, 0.1, 1.4, '#7f8c8d', { material: 'color: #7f8c8d; roughness: 0.9' });
+
+  // 4 steel support legs with cross-bracing
+  [[-0.65, -0.45], [-0.65, 0.45], [0.65, -0.45], [0.65, 0.45]].forEach(([lx, lz]) => {
+    cyl(g, v(lx, 0.45, lz), 0.04, 0.8, '#4a5568', 10, { material: darkMetal });
+  });
+  // Cross braces
+  box(g, '0 0.45 -0.45', 1.3, 0.03, 0.03, '#4a5568', { rotation: '0 0 25', material: darkMetal });
+  box(g, '0 0.45 -0.45', 1.3, 0.03, 0.03, '#4a5568', { rotation: '0 0 -25', material: darkMetal });
+
+  // Elevated steel platform
+  box(g, '0 0.85 0', 1.6, 0.06, 1.2, '#4a5568', { material: steel });
+
+  // Large main water tank (cylindrical reservoir)
+  cyl(g, '-0.25 1.7 0', 0.45, 1.6, '#e2e8f0', 20, { material: tankMetal });
+  // Reinforcing rings
+  [1.1, 1.7, 2.3].forEach((ry) => {
+    cyl(g, v(-0.25, ry, 0), 0.47, 0.04, '#a0aec0', 20, { material: steel });
+  });
+  // Domed top
+  ball(g, '-0.25 2.5 0', 0.45, '#cbd5e1', { scale: '1 0.4 1', material: tankMetal });
+  // Top vent / inspection hatch
+  cyl(g, '-0.25 2.7 0', 0.12, 0.1, '#718096', 12, { material: steel });
+
+  // Vertical water level sight gauge
+  cyl(g, '-0.25 1.7 0.46', 0.02, 1.2, '#38bdf8', 8, { material: 'color: #38bdf8; opacity: 0.8; transparent: true; roughness: 0.1' });
+
+  // Dual multi-stage filtration canisters (mounted on the right)
+  // Stage 1: Sand/Sediment filter (deep industrial blue)
+  cyl(g, '0.4 1.35 -0.22', 0.15, 0.9, '#1e40af', 16, { material: 'color: #1e40af; metalness: 0.5; roughness: 0.25' });
+  cyl(g, '0.4 1.82 -0.22', 0.17, 0.08, '#94a3b8', 16, { material: steel });
+  cyl(g, '0.4 0.88 -0.22', 0.17, 0.08, '#94a3b8', 16, { material: steel });
+
+  // Stage 2: Activated Carbon/Purification filter (clean water cyan)
+  cyl(g, '0.4 1.35 0.22', 0.15, 0.9, '#0284c7', 16, { material: 'color: #0284c7; metalness: 0.5; roughness: 0.25' });
+  cyl(g, '0.4 1.82 0.22', 0.17, 0.08, '#94a3b8', 16, { material: steel });
+  cyl(g, '0.4 0.88 0.22', 0.17, 0.08, '#94a3b8', 16, { material: steel });
+
+  // Brass pressure gauges on top of filters
+  [-0.22, 0.22].forEach((pz) => {
+    cyl(g, v(0.4, 1.95, pz), 0.015, 0.12, '#d97706', 8, { material: 'color: #d97706; metalness: 0.8; roughness: 0.3' });
+    cyl(g, v(0.4, 2.02, pz), 0.06, 0.03, '#ffffff', 14, { rotation: '90 0 0', material: 'color: #ffffff; roughness: 0.2' });
+  });
+
+  // Piping connecting tank and filters
+  cyl(g, '0.1 1.7 0', 0.04, 0.6, '#94a3b8', 10, { rotation: '0 0 90', material: pipeMetal });
+  cyl(g, '0.4 1.7 0', 0.035, 0.44, '#94a3b8', 10, { rotation: '90 0 0', material: pipeMetal });
+
+  // Intake pipe running down towards the pond
+  cyl(g, '-0.75 1.5 0', 0.04, 0.4, '#94a3b8', 10, { rotation: '0 0 90', material: pipeMetal });
+  cyl(g, '-0.95 0.8 0', 0.04, 1.4, '#94a3b8', 10, { material: pipeMetal });
+
+  // Outflow clean water tap with red control valve
+  cyl(g, '0.4 0.7 0.45', 0.035, 0.35, '#d97706', 10, { rotation: '90 0 0', material: 'color: #d97706; metalness: 0.85; roughness: 0.25' });
+  cyl(g, '0.4 0.55 0.6', 0.03, 0.2, '#d97706', 10, { material: 'color: #d97706; metalness: 0.85; roughness: 0.25' });
+  // Red valve wheel
+  cyl(g, '0.4 0.77 0.45', 0.08, 0.02, '#dc2626', 12, { rotation: '0 0 0', material: 'color: #dc2626; roughness: 0.4' });
+
+  // Water dispensing stream from spout
+  cyl(g, '0.4 0.35 0.6', 0.015, 0.3, '#38bdf8', 8, { material: 'color: #38bdf8; opacity: 0.75; transparent: true; roughness: 0.1' });
+
+  return g;
+}
