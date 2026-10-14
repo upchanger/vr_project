@@ -56,12 +56,12 @@ const cursor = document.getElementById('cursor');
 const ALL_COLORS = SDGS.map((g) => g.color);
 
 // ---------------------------------------------------------------------------
-// Progress (which goals the viewer completed), kept in this browser only
+// Progress (which goals the viewer completed) - resets on every page refresh
 // ---------------------------------------------------------------------------
 const STORE = 'sdg-vr-done';
-let done = new Set();
-try { done = new Set(JSON.parse(localStorage.getItem(STORE) || '[]')); } catch { /* storage unavailable */ }
-const saveDone = () => { try { localStorage.setItem(STORE, JSON.stringify([...done])); } catch { /* ignore */ } };
+try { localStorage.removeItem(STORE); } catch { /* storage unavailable */ }
+const done = new Set();
+const saveDone = () => {};
 
 // ---------------------------------------------------------------------------
 // Helpers
