@@ -37,7 +37,7 @@ const P = {
   turbine: (p, x, z, s = 1) =>
     externalOr(p, 'wind_turbine', v(x, 0, z), { scale: s }, () => turbine(p, x, z, s)),
   solar: (p, x, z, s = 1) =>
-    externalOr(p, 'solar_panel', v(x, 0, z), { scale: s, rot: v(0, faceViewer(x, z) + 180, 0) }, () => solarPanel(p, x, z, s)),
+    externalOr(p, 'solar_panel', v(x, 0, z), { scale: s, rot: v(0, faceViewer(x, z), 0) }, () => solarPanel(p, x, z, s, faceViewer(x, z))),
   fish: (p, color, s = 1) =>
     externalOr(p, 'fish', '0 0 0', { scale: s }, () => fish(p, color, s)),
   factory: (p, pos, fallback) => externalOr(p, 'factory', pos, {}, fallback),

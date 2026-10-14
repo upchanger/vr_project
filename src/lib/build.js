@@ -141,12 +141,12 @@ export function turbine(p, x, z, s = 1) {
   return g;
 }
 
-export function solarPanel(p, x, z, s = 1) {
-  const g = group(p, v(x, 0, z), { scale: v(s, s, s), 'merge-static': '' });
+export function solarPanel(p, x, z, s = 1, ry = 0) {
+  const g = group(p, v(x, 0, z), { scale: v(s, s, s), rotation: v(0, ry, 0), 'merge-static': '' });
   const steel = 'color: #95a5a6; metalness: 0.85; roughness: 0.35';
   cyl(g, '-0.35 0.3 0', 0.025, 0.6, '#95a5a6', 10, { material: steel });
   cyl(g, '0.35 0.3 0', 0.025, 0.6, '#95a5a6', 10, { material: steel });
-  const panel = group(g, '0 0.65 0', { rotation: '-32 0 0' });
+  const panel = group(g, '0 0.65 0', { rotation: '32 0 0' });
   box(panel, '0 0 0', 1.05, 0.04, 0.66, '#b0b7bb', { material: steel });
   for (let r = 0; r < 2; r++) {
     for (let c = 0; c < 4; c++) {
